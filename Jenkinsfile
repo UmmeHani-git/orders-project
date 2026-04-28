@@ -9,9 +9,7 @@ pipeline {
 
     stage('Checkout Code') {
       steps {
-        // Pull latest code from GitHub repo
         git branch: 'main', url: 'https://github.com/UmmeHani-git/orders-project.git'
-        
       }
     }
 
@@ -36,18 +34,37 @@ pipeline {
       }
     }
 
-    // ✅ STEP 2: Terraform (SAFE MODE)
+    // ✅ ✅ NEW STEP: APPLY INFRA ONLY IF NEEDED
+    stage('Terraform Apply If Needed') {
+      steps {
+        sh '''
+        cd terraform
+
+        terraform init
+
+        echo "Running Terraform plan..."
+
+        if terraform plan | grep -q "No changes"; then
+          echo "No changes → Skipping apply"
+        else
+          echo "Changes detected → Applying..."
+          terraform apply -auto-approve
+        fi
+        '''
+      }
+    }
+
+    // ✅ STEP 2: Terraform PLAN (just visibility)
     stage('Terraform Plan Only') {
       steps {
         sh '''
         cd terraform
-        terraform init
         terraform plan
         '''
       }
     }
 
-    // ✅ STEP 3: UPDATE LAMBDAS (AUTO)
+    // ✅ STEP 3: UPDATE LAMBDAS
     stage('Update Lambdas') {
       steps {
         sh '''
@@ -80,7 +97,7 @@ pipeline {
       }
     }
 
-    // ✅ STEP 5: AUTO STOP OLD + RUN NEW (FIXED)
+    // ✅ STEP 5: RUN FRONTEND
     stage('Run Frontend') {
       steps {
         sh '''
