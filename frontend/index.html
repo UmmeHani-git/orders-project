@@ -1,66 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orders App</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #444;
+    }
+
+    .section {
+      margin-bottom: 25px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #5a67d8;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: center;
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
+  </style>
+</head>
 <body>
 
-<h2>Create Order</h2>
-<input id="cust" placeholder="Customer"><br>
-<input id="prod" placeholder="Product"><br>
-<input id="qty" placeholder="Qty"><br>
-<button onclick="create()">Create</button>
+<div class="container">
+  <h1>🛒 Orders System</h1>
 
-<h2>Check Status</h2>
-<input id="oid" placeholder="Order ID">
-<button onclick="check()">Check</button>
+  <!-- CREATE ORDER -->
+  <div class="section">
+    <h3>Create Order</h3>
+
+    <label>Order ID</label>
+    <input id="orderId" placeholder="Enter order id">
+
+    <label>Product</label>
+    <input id="product" placeholder="Enter product name">
+
+    <label>Quantity</label>
+    <input id="quantity" placeholder="Enter quantity">
+
+    <button onclick="create()">Create Order</button>
+
+    <div id="createResult" class="result"></div>
+  </div>
+
+  <!-- CHECK STATUS -->
+  <div class="section">
+    <h3>Check Status</h3>
+
+    <input id="checkId" placeholder="Enter order id">
+
+    <button onclick="check()">Check Status</button>
+
+    <div id="statusResult" class="result"></div>
+  </div>
+
+</div>
 
 <script>
-const API = "https://5v26sh5iq8.execute-api.us-east-1.amazonaws.com"; // 🔴 Replace after terraform output
+const API_URL = "https://5v26sh5iq8.execute-api.us-east-1.amazonaws.com"; // your API
 
-// ✅ CREATE ORDER
-function create() {
-  fetch(API + "/orders", {   // ✅ FIX: no trailing slash
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      customer_id: cust.value,
-      product_id: prod.value,
-      quantity: qty.value
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    alert(JSON.stringify(data, null, 2));  // ✅ Better output
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Error creating order");
-  });
-}
+// CREATE ORDER
+async function create() {
+  const order_id = document.getElementById("orderId").value;
+  const product = document.getElementById("product").value;
+  const quantity = document.getElementById("quantity").value;
 
-// ✅ CHECK STATUS
-function check() {
+  const resultBox = document.getElementById("createResult");
 
-  // ✅ FIX: prevent empty request → avoids 500 error
-  if (!oid.value) {
-    alert("Please enter Order ID");
-    return;
+  try {
+    const res = await fetch(`${API_URL}/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        order_id,
+        product,
+        quantity
+      })
+    });
+
+    const data = await res.json();
+
+    resultBox.innerHTML = "✅ Order Created Successfully!";
+    resultBox.classList.remove("error");
+
+  } catch (err) {
+    resultBox.innerHTML = "❌ Failed to create order";
+    resultBox.classList.add("error");
   }
-
-  fetch(API + "/orders/" + oid.value)   // ✅ Correct endpoint
-  .then(res => {
-    if (!res.ok) {
-      throw new Error("Order not found");
-    }
-    return res.json();
-  })
-  .then(data => {
-    alert(JSON.stringify(data, null, 2));  // ✅ Proper display
-  })
-  .catch(err => {
-    console.error(err);
-    alert(err.message);
-  });
 }
 
+// CHECK STATUS
+async function check() {
+  const order_id = document.getElementById("checkId").value;
+  const resultBox = document.getElementById("statusResult");
+
+  try {
+    const res = await fetch(`${API_URL}/orders/${order_id}`);
+    const data = await res.json();
+
+    resultBox.innerHTML = `📦 Status: ${data.status}`;
+    resultBox.classList.remove("error");
+
+  } catch (err) {
+    resultBox.innerHTML = "❌ Error fetching status";
+    resultBox.classList.add("error");
+  }
+}
 </script>
 
 </body>
