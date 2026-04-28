@@ -8,8 +8,10 @@ resource "aws_sqs_queue" "orders" {
 }
 
 # SNS
-resource "aws_sns_topic" "orders" {
-  name = "orders-topic"
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.orders.arn
+  protocol  = "email"
+  endpoint  = "uhani2683@gmail.com"   # 🔴 replace
 }
 
 # DynamoDB
