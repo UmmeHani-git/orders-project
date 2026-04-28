@@ -1,0 +1,44 @@
+pipeline {
+  agent any
+
+  environment {
+    REGION = "us-east-1"
+  }
+
+  stages {
+
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main', url: 'https://github.com/UmmeHani-git/orders-project.git'
+      }
+    }
+
+    stage('Terraform Init') {
+      steps {
+        sh '''
+        cd terraform
+        terraform init
+        '''
+      }
+    }
+
+    stage('Terraform Plan') {
+      steps {
+        sh '''
+        cd terraform
+        terraform plan
+        '''
+      }
+    }
+
+    stage('Terraform Apply (ONLY WHEN NEEDED)') {
+      steps {
+        input message: "Do you want to APPLY infrastructure changes?"
+        sh '''
+        cd terraform
+        terraform apply -auto-approve
+        '''
+      }
+    }
+  }
+}
