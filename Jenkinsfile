@@ -7,14 +7,11 @@ pipeline {
 
   stages {
 
-      stage('Checkout Code') {
+    stage('Checkout') {
       steps {
-        // Pull latest code from GitHub repo
-        git branch: 'main', url: 'https://github.com/UmmeHani-git/orders-project.git'
-        
+        git 'https://github.com/YOUR_REPO.git'
       }
     }
-
 
     stage('Version') {
       steps {
@@ -27,6 +24,7 @@ pipeline {
       }
     }
 
+    // ✅ STEP 1: ZIP LAMBDAS
     stage('Zip Lambdas') {
       steps {
         sh '''
@@ -36,16 +34,18 @@ pipeline {
       }
     }
 
-    stage('Terraform') {
-  steps {
-    sh '''
-    cd terraform
-    terraform init
-    terraform plan
-    '''
-  }
-}
+    // ✅ STEP 2: Terraform (SAFE MODE)
+    stage('Terraform Plan Only') {
+      steps {
+        sh '''
+        cd terraform
+        terraform init
+        terraform plan
+        '''
+      }
+    }
 
+    // ✅ STEP 3: UPDATE LAMBDAS (AUTO)
     stage('Update Lambdas') {
       steps {
         sh '''
@@ -56,10 +56,12 @@ pipeline {
       }
     }
 
+    // ✅ STEP 4: BUILD + PUSH DOCKER
     stage('Build & Push Frontend') {
       steps {
         sh '''
         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
         ECR="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/orders-frontend"
 
         aws ecr get-login-password --region $REGION \
@@ -76,30 +78,21 @@ pipeline {
       }
     }
 
-  stage('Run Frontend') {
-  steps {
-    sh '''
-    echo "Stopping any container using port 80..."
+    // ✅ STEP 5: AUTO STOP OLD + RUN NEW (FIXED)
+    stage('Run Frontend') {
+      steps {
+        sh '''
+        echo "Stopping old container if exists..."
 
-    CONTAINER=$(docker ps -q --filter "publish=80")
+        docker ps -q --filter "name=frontend" | grep -q . && docker stop frontend || true
+        docker ps -aq --filter "name=frontend" | grep -q . && docker rm frontend || true
 
-    if [ ! -z "$CONTAINER" ]; then
-      docker stop $CONTAINER
-      docker rm $CONTAINER
-    fi
+        echo "Starting new container..."
 
-    echo "Removing old frontend container if exists..."
-
-    docker rm -f frontend 2>/dev/null || true
-
-    echo "Starting new frontend container..."
-
-    docker run -d -p 80:80 --name frontend orders-frontend
-
-    echo "Frontend deployed successfully 🚀"
-    '''
-  }
-}
+        docker run -d -p 80:80 --name frontend orders-frontend
+        '''
+      }
+    }
 
   }
 }
