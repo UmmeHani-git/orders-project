@@ -116,6 +116,12 @@ resource "aws_lambda_event_source_mapping" "trigger" {
 resource "aws_apigatewayv2_api" "api" {
   name          = "orders-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["*"]
+  }
 }
 
 # Producer route
