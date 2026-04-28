@@ -37,14 +37,14 @@ pipeline {
     }
 
     stage('Terraform') {
-      steps {
-        sh '''
-        cd terraform
-        terraform init
-        terraform apply -auto-approve
-        '''
-      }
-    }
+  steps {
+    sh '''
+    cd terraform
+    terraform init
+    terraform plan
+    '''
+  }
+}
 
     stage('Update Lambdas') {
       steps {
