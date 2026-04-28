@@ -13,10 +13,11 @@
 <button onclick="check()">Check</button>
 
 <script>
-const API = "https://5v26sh5iq8.execute-api.us-east-1.amazonaws.com";
+const API = "REPLACE_API_URL"; // 🔴 Replace after terraform output
 
+// ✅ CREATE ORDER
 function create() {
-  fetch(API + "/orders", {
+  fetch(API + "/orders", {   // ✅ FIX: no trailing slash
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
@@ -24,13 +25,42 @@ function create() {
       product_id: prod.value,
       quantity: qty.value
     })
-  }).then(r=>r.json()).then(alert);
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(JSON.stringify(data, null, 2));  // ✅ Better output
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error creating order");
+  });
 }
 
+// ✅ CHECK STATUS
 function check() {
-  fetch(API + "/orders/" + oid.value)
-  .then(r=>r.json()).then(alert);
+
+  // ✅ FIX: prevent empty request → avoids 500 error
+  if (!oid.value) {
+    alert("Please enter Order ID");
+    return;
+  }
+
+  fetch(API + "/orders/" + oid.value)   // ✅ Correct endpoint
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Order not found");
+    }
+    return res.json();
+  })
+  .then(data => {
+    alert(JSON.stringify(data, null, 2));  // ✅ Proper display
+  })
+  .catch(err => {
+    console.error(err);
+    alert(err.message);
+  });
 }
+
 </script>
 
 </body>
