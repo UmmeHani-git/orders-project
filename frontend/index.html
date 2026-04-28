@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Orders App</title>
 
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
   <style>
@@ -21,36 +20,33 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #333;
     }
 
     .container {
       background: #fff;
       padding: 30px;
       border-radius: 15px;
-      width: 400px;
+      width: 420px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
     h1 {
       text-align: center;
       margin-bottom: 20px;
-      color: #444;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      color: #555;
     }
 
     .section {
       margin-bottom: 25px;
     }
 
-    label {
-      font-size: 14px;
-      color: #666;
-    }
-
     input {
       width: 100%;
       padding: 10px;
-      margin-top: 5px;
       margin-bottom: 10px;
       border-radius: 8px;
       border: 1px solid #ddd;
@@ -70,7 +66,6 @@
       color: white;
       font-weight: 600;
       cursor: pointer;
-      transition: 0.3s;
     }
 
     button:hover {
@@ -79,15 +74,14 @@
 
     .result {
       margin-top: 10px;
-      font-size: 14px;
       text-align: center;
+      font-size: 14px;
       color: green;
     }
 
     .error {
       color: red;
     }
-
   </style>
 </head>
 <body>
@@ -99,14 +93,9 @@
   <div class="section">
     <h3>Create Order</h3>
 
-    <label>Order ID</label>
-    <input id="orderId" placeholder="Enter order id">
-
-    <label>Product</label>
-    <input id="product" placeholder="Enter product name">
-
-    <label>Quantity</label>
-    <input id="quantity" placeholder="Enter quantity">
+    <input id="customerId" placeholder="Customer ID">
+    <input id="productId" placeholder="Product ID">
+    <input id="quantity" placeholder="Quantity">
 
     <button onclick="create()">Create Order</button>
 
@@ -117,22 +106,21 @@
   <div class="section">
     <h3>Check Status</h3>
 
-    <input id="checkId" placeholder="Enter order id">
+    <input id="orderId" placeholder="Order ID">
 
     <button onclick="check()">Check Status</button>
 
     <div id="statusResult" class="result"></div>
   </div>
-
 </div>
 
 <script>
-const API_URL = "https://5v26sh5iq8.execute-api.us-east-1.amazonaws.com"; // your API
+const API_URL = "https://5v26sh5iq8.execute-api.us-east-1.amazonaws.com";
 
-// CREATE ORDER
+// ✅ CREATE ORDER (matches backend exactly)
 async function create() {
-  const order_id = document.getElementById("orderId").value;
-  const product = document.getElementById("product").value;
+  const customer_id = document.getElementById("customerId").value;
+  const product_id = document.getElementById("productId").value;
   const quantity = document.getElementById("quantity").value;
 
   const resultBox = document.getElementById("createResult");
@@ -144,16 +132,21 @@ async function create() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        order_id,
-        product,
+        customer_id,
+        product_id,
         quantity
       })
     });
 
     const data = await res.json();
 
-    resultBox.innerHTML = "✅ Order Created Successfully!";
-    resultBox.classList.remove("error");
+    if (res.ok) {
+      resultBox.innerHTML = `✅ Order Created! ID: ${data.order_id}`;
+      resultBox.classList.remove("error");
+    } else {
+      resultBox.innerHTML = `❌ ${data.error}`;
+      resultBox.classList.add("error");
+    }
 
   } catch (err) {
     resultBox.innerHTML = "❌ Failed to create order";
@@ -161,17 +154,22 @@ async function create() {
   }
 }
 
-// CHECK STATUS
+// ✅ CHECK STATUS
 async function check() {
-  const order_id = document.getElementById("checkId").value;
+  const order_id = document.getElementById("orderId").value;
   const resultBox = document.getElementById("statusResult");
 
   try {
     const res = await fetch(`${API_URL}/orders/${order_id}`);
     const data = await res.json();
 
-    resultBox.innerHTML = `📦 Status: ${data.status}`;
-    resultBox.classList.remove("error");
+    if (res.ok) {
+      resultBox.innerHTML = `📦 Status: ${data.status}`;
+      resultBox.classList.remove("error");
+    } else {
+      resultBox.innerHTML = `❌ ${data.error}`;
+      resultBox.classList.add("error");
+    }
 
   } catch (err) {
     resultBox.innerHTML = "❌ Error fetching status";
