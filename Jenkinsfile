@@ -76,16 +76,30 @@ pipeline {
       }
     }
 
-    stage('Run Frontend') {
-      steps {
-        sh '''
-        docker stop frontend || true
-        docker rm frontend || true
+  stage('Run Frontend') {
+  steps {
+    sh '''
+    echo "Stopping any container using port 80..."
 
-        docker run -d -p 80:80 --name frontend orders-frontend
-        '''
-      }
-    }
+    CONTAINER=$(docker ps -q --filter "publish=80")
+
+    if [ ! -z "$CONTAINER" ]; then
+      docker stop $CONTAINER
+      docker rm $CONTAINER
+    fi
+
+    echo "Removing old frontend container if exists..."
+
+    docker rm -f frontend 2>/dev/null || true
+
+    echo "Starting new frontend container..."
+
+    docker run -d -p 80:80 --name frontend orders-frontend
+
+    echo "Frontend deployed successfully 🚀"
+    '''
+  }
+}
 
   }
 }
