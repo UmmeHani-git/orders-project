@@ -85,7 +85,7 @@ resource "aws_lambda_function" "producer" {
 
   environment {
     variables = {
-      QUEUE_URL = aws_sqs_queue.orders.id
+      QUEUE_URL = aws_sqs_queue.orders.url
     }
   }
 }
