@@ -7,9 +7,11 @@ pipeline {
 
   stages {
 
-    stage('Checkout') {
+    stage('Checkout Code') {
       steps {
-        git 'https://github.com/YOUR_REPO.git'
+        // Pull latest code from GitHub repo
+        git branch: 'main', url: 'https://github.com/UmmeHani-git/orders-project.git'
+        
       }
     }
 
